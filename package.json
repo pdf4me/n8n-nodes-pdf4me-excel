@@ -1,0 +1,48 @@
+{
+  "name": "n8n-nodes-pdf4me-excel",
+  "version": "0.1.0",
+  "description": "n8n community nodes for PDF4me Excel operations",
+  "keywords": [
+    "n8n-community-node-package",
+    "n8n",
+    "pdf4me",
+    "excel"
+  ],
+  "license": "MIT",
+  "homepage": "",
+  "author": {
+    "name": "Shakti Karmakar",
+    "email": "shakti.karmakar@devynooxLIVE.onmicrosoft.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && gulp build:icons",
+    "dev": "tsc --watch",
+    "format": "prettier nodes credentials --write",
+    "lint": "eslint nodes credentials package.json",
+    "lintfix": "eslint nodes credentials package.json --fix",
+    "prepublishOnly": "npm run build && npm run lint -c .eslintrc.prepublish.js nodes credentials package.json"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [],
+    "nodes": []
+  },
+  "devDependencies": {
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.0",
+    "eslint-plugin-n8n-nodes-base": "^1.0.0",
+    "gulp": "^4.0.2",
+    "n8n-workflow": "*",
+    "prettier": "^2.0.0",
+    "typescript": "^4.0.0"
+  },
+  "dependencies": {}
+}
