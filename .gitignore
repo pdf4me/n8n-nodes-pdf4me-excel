@@ -1,9 +1,8 @@
-node_modules/
-dist/
-*.log
+node_modules
 .DS_Store
-.env
-.vscode/
-.idea/
-*.tsbuildinfo
-
+.tmp
+tmp
+dist
+npm-debug.log*
+yarn.lock
+.vscode/launch.json
