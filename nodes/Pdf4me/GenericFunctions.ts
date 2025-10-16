@@ -261,6 +261,8 @@ export function sanitizeProfiles(data: IDataObject): void {
  */
 export const ActionConstants = {
 	AddTextHeaderFooterToExcel: 'Add Text Header Footer To Excel',
+	AddImageHeaderFooterToExcel: 'Add Image Header Footer To Excel',
+	RemoveHeaderFooterToExcel: 'Remove Header Footer To Excel',
 };
 
 /**
