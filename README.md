@@ -49,7 +49,7 @@ For Docker-based deployments, add the package to your package.json and rebuild t
   },
   "dependencies": {
     "n8n": "^1.0.0",
-    "n8n-nodes-pdf4me-excel": "^1.0.0"
+    "n8n-nodes-pdf4me-excel": "^0.8.1"
   }
 }
 ```
