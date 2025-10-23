@@ -1,0 +1,601 @@
+import type { IExecuteFunctions, IDataObject, INodeProperties } from 'n8n-workflow';
+import {
+	pdf4meAsyncRequest,
+	ActionConstants,
+} from '../GenericFunctions';
+
+
+export const description: INodeProperties[] = [
+	// === INPUT FILE SETTINGS ===
+	{
+		displayName: 'Excel File Input Method',
+		name: 'inputDataType',
+		type: 'options',
+		required: true,
+		default: 'binaryData',
+		description: 'Choose how to provide the Excel file for processing',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+		options: [
+			{
+				name: 'From Previous Node (Binary Data)',
+				value: 'binaryData',
+				description: 'Use Excel file passed from a previous n8n node',
+			},
+			{
+				name: 'Base64 Encoded String',
+				value: 'base64',
+				description: 'Provide Excel file content as base64 encoded string',
+			},
+			{
+				name: 'Download from URL',
+				value: 'url',
+				description: 'Download Excel file directly from a web URL',
+			},
+		],
+	},
+	{
+		displayName: 'Binary Data Property Name',
+		name: 'binaryPropertyName',
+		type: 'string',
+		required: true,
+		default: 'data',
+		description: 'Name of the binary property containing the Excel file (usually \'data\')',
+		placeholder: 'data',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+				inputDataType: ['binaryData'],
+			},
+		},
+	},
+	{
+		displayName: 'Base64 Encoded Excel Content',
+		name: 'base64Content',
+		type: 'string',
+		typeOptions: {
+			alwaysOpenEditWindow: true,
+		},
+		required: true,
+		default: '',
+		description: 'Base64 encoded string containing the Excel file data',
+		placeholder: 'UEsDBBQABgAIAAAAIQBi7p1oXgEAAJAEAAATAAgCW0NvbnRlbnRfVHlwZXNdLnht...',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+				inputDataType: ['base64'],
+			},
+		},
+	},
+	{
+		displayName: 'Excel File URL',
+		name: 'url',
+		type: 'string',
+		required: true,
+		default: '',
+		description: 'URL to download the Excel file from (must be publicly accessible)',
+		placeholder: 'https://example.com/file.xlsx',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+				inputDataType: ['url'],
+			},
+		},
+	},
+	// === WATERMARK SETTINGS ===
+	{
+		displayName: 'Watermark Text',
+		name: 'watermarkText',
+		type: 'string',
+		required: true,
+		default: 'CONFIDENTIAL',
+		description: 'Text to appear as watermark (e.g., CONFIDENTIAL, DRAFT, INTERNAL USE ONLY)',
+		placeholder: 'CONFIDENTIAL',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+	},
+	{
+		displayName: 'Font Family',
+		name: 'fontFamily',
+		type: 'options',
+		default: 'Arial',
+		description: 'Font family for the watermark text',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+		options: [
+			{ name: 'Arial', value: 'Arial' },
+			{ name: 'Times New Roman', value: 'Times New Roman' },
+			{ name: 'Courier New', value: 'Courier New' },
+			{ name: 'Verdana', value: 'Verdana' },
+			{ name: 'Calibri', value: 'Calibri' },
+			{ name: 'Helvetica', value: 'Helvetica' },
+			{ name: 'Georgia', value: 'Georgia' },
+			{ name: 'Tahoma', value: 'Tahoma' },
+		],
+	},
+	{
+		displayName: 'Text Size',
+		name: 'textSize',
+		type: 'number',
+		default: 20,
+		description: 'Font size for the watermark text (6-72)',
+		typeOptions: {
+			minValue: 6,
+			maxValue: 72,
+		},
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+	},
+	{
+		displayName: 'Bold',
+		name: 'isBold',
+		type: 'boolean',
+		default: true,
+		description: 'Whether the watermark text should be bold',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+	},
+	{
+		displayName: 'Italic',
+		name: 'isItalic',
+		type: 'boolean',
+		default: false,
+		description: 'Whether the watermark text should be italic',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+	},
+	{
+		displayName: 'Text Color',
+		name: 'textColor',
+		type: 'color',
+		default: '#808080',
+		description: 'Color for the watermark text',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+	},
+	{
+		displayName: 'Transparency',
+		name: 'transparency',
+		type: 'number',
+		default: 50,
+		description: 'Transparency level for the watermark (0-100, where 0 is fully transparent)',
+		typeOptions: {
+			minValue: 0,
+			maxValue: 100,
+		},
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+	},
+	{
+		displayName: 'Rotation Angle',
+		name: 'rotationAngle',
+		type: 'number',
+		default: -45,
+		description: 'Rotation angle for the watermark in degrees (-360 to 360)',
+		typeOptions: {
+			minValue: -360,
+			maxValue: 360,
+		},
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+	},
+	{
+		displayName: 'Position',
+		name: 'position',
+		type: 'options',
+		default: 1,
+		description: 'Position of the watermark on the worksheet',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+		options: [
+			{ name: 'Center', value: 1 },
+			{ name: 'Top Left', value: 2 },
+			{ name: 'Top Center', value: 3 },
+			{ name: 'Top Right', value: 4 },
+			{ name: 'Middle Left', value: 5 },
+			{ name: 'Middle Right', value: 6 },
+			{ name: 'Bottom Left', value: 7 },
+			{ name: 'Bottom Center', value: 8 },
+			{ name: 'Bottom Right', value: 9 },
+		],
+	},
+	{
+		displayName: 'Worksheet Selection',
+		name: 'worksheetSelection',
+		type: 'options',
+		default: 1,
+		description: 'Which worksheets to apply the watermark to',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+		options: [
+			{ name: 'All Worksheets', value: 1 },
+			{ name: 'Specific Worksheets by Name', value: 2 },
+			{ name: 'Specific Worksheets by Index', value: 3 },
+		],
+	},
+	{
+		displayName: 'Selected Worksheet Names',
+		name: 'selectedWorksheetNames',
+		type: 'string',
+		default: '',
+		description: 'Comma-separated list of worksheet names to apply watermark to (e.g., Sheet1,Sheet2,Data)',
+		placeholder: 'Sheet1,Sheet2',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+				worksheetSelection: [2],
+			},
+		},
+	},
+	{
+		displayName: 'Selected Worksheet Indexes',
+		name: 'selectedWorksheetIndexes',
+		type: 'string',
+		default: '',
+		description: 'Comma-separated list of worksheet indexes to apply watermark to (0-based, e.g., 0,1,2)',
+		placeholder: '0,1,2',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+				worksheetSelection: [3],
+			},
+		},
+	},
+	// === OUTPUT SETTINGS ===
+	{
+		displayName: 'Output File Name',
+		name: 'outputFileName',
+		type: 'string',
+		default: 'excel_with_watermark.xlsx',
+		description: 'Name for the processed Excel file (will have watermark added)',
+		placeholder: 'output.xlsx',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+	},
+	{
+		displayName: 'Source Document Name',
+		name: 'docName',
+		type: 'string',
+		default: 'myExcelFile.xlsx',
+		description: 'Name of the original Excel file (for reference and processing)',
+		placeholder: 'myExcelFile.xlsx',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+	},
+	{
+		displayName: 'Output Binary Data Name',
+		name: 'binaryDataName',
+		type: 'string',
+		default: 'data',
+		description: 'Name for the binary data in the n8n output (used to access the processed file)',
+		placeholder: 'excel-file',
+		displayOptions: {
+			show: {
+				operation: [ActionConstants.AddTextWatermarkToExcel],
+			},
+		},
+	},
+];
+
+/**
+ * Add text watermark to Excel files using PDF4Me API
+ * Process: Read Excel file → Encode to base64 → Send API request → Poll for completion → Save Excel file
+ * Adds customizable text watermarks to Excel worksheets with font, color, rotation, and position options
+ */
+export async function execute(this: IExecuteFunctions, index: number) {
+	try {
+		const inputDataType = this.getNodeParameter('inputDataType', index) as string;
+		const outputFileName = this.getNodeParameter('outputFileName', index) as string;
+		const docName = this.getNodeParameter('docName', index) as string;
+		const binaryDataName = this.getNodeParameter('binaryDataName', index) as string;
+
+		// Get watermark parameters
+		const watermarkText = this.getNodeParameter('watermarkText', index) as string;
+		const fontFamily = this.getNodeParameter('fontFamily', index, 'Arial') as string;
+		const textSize = this.getNodeParameter('textSize', index, 20) as number;
+		const isBold = this.getNodeParameter('isBold', index, true) as boolean;
+		const isItalic = this.getNodeParameter('isItalic', index, false) as boolean;
+		const textColor = this.getNodeParameter('textColor', index, '#808080') as string;
+		const transparency = this.getNodeParameter('transparency', index, 50) as number;
+		const rotationAngle = this.getNodeParameter('rotationAngle', index, -45) as number;
+		const position = this.getNodeParameter('position', index, 1) as number;
+		const worksheetSelection = this.getNodeParameter('worksheetSelection', index, 1) as number;
+		const selectedWorksheetNamesStr = this.getNodeParameter('selectedWorksheetNames', index, '') as string;
+		const selectedWorksheetIndexesStr = this.getNodeParameter('selectedWorksheetIndexes', index, '') as string;
+
+		// Parse worksheet selections
+		const selectedWorksheetNames = selectedWorksheetNamesStr
+			? selectedWorksheetNamesStr.split(',').map(name => name.trim()).filter(name => name !== '')
+			: [];
+		const selectedWorksheetIndexes = selectedWorksheetIndexesStr
+			? selectedWorksheetIndexesStr.split(',').map(idx => parseInt(idx.trim(), 10)).filter(idx => !isNaN(idx))
+			: [];
+
+		let docContent: string;
+		let originalFileName = docName;
+
+		// Handle different input data types
+		if (inputDataType === 'binaryData') {
+			// Get Excel content from binary data
+			const binaryPropertyName = this.getNodeParameter('binaryPropertyName', index) as string;
+			const item = this.getInputData(index);
+
+			if (!item[0].binary || !item[0].binary[binaryPropertyName]) {
+				throw new Error(`No binary data found in property '${binaryPropertyName}'`);
+			}
+
+			const binaryData = item[0].binary[binaryPropertyName];
+			const buffer = await this.helpers.getBinaryDataBuffer(index, binaryPropertyName);
+			docContent = buffer.toString('base64');
+
+			if (binaryData.fileName) {
+				originalFileName = binaryData.fileName;
+			}
+		} else if (inputDataType === 'base64') {
+			// Use base64 content directly
+			docContent = this.getNodeParameter('base64Content', index) as string;
+
+			// Remove data URL prefix if present
+			if (docContent.includes(',')) {
+				docContent = docContent.split(',')[1];
+			}
+		} else if (inputDataType === 'url') {
+			// Download Excel file from URL
+			const url = this.getNodeParameter('url', index) as string;
+
+			if (!url || url.trim() === '') {
+				throw new Error('URL is required when using URL input type');
+			}
+
+			try {
+				// Download the file using n8n's helpers
+				const response = await this.helpers.httpRequest({
+					method: 'GET',
+					url,
+					encoding: 'arraybuffer',
+					returnFullResponse: true,
+				});
+
+				// Convert to base64
+				const buffer = Buffer.from(response.body as ArrayBuffer);
+				docContent = buffer.toString('base64');
+
+				// Try to extract filename from URL or Content-Disposition header
+				const contentDisposition = response.headers['content-disposition'];
+				if (contentDisposition) {
+					const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+					if (filenameMatch && filenameMatch[1]) {
+						originalFileName = filenameMatch[1].replace(/['"]/g, '');
+					}
+				}
+
+				// Fallback: extract filename from URL
+				if (originalFileName === docName) {
+					const urlParts = url.split('/');
+					const urlFilename = urlParts[urlParts.length - 1].split('?')[0];
+					if (urlFilename) {
+						originalFileName = decodeURIComponent(urlFilename);
+					}
+				}
+			} catch (error) {
+				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+				throw new Error(`Failed to download file from URL: ${errorMessage}`);
+			}
+		} else {
+			throw new Error(`Unsupported input data type: ${inputDataType}`);
+		}
+
+		// Validate content
+		if (!docContent || docContent.trim() === '') {
+			throw new Error('Excel content is required');
+		}
+
+		// Build the request body according to the API specification
+		const body: IDataObject = {
+			document: {
+				name: originalFileName,
+			},
+			docContent,
+			addWatermarkToExcelAction: {
+				watermarkText,
+				fontFamily,
+				textSize,
+				isBold,
+				isItalic,
+				textColor,
+				transparency,
+				rotationAngle,
+				position,
+				worksheetSelection,
+				selectedWorksheetNames,
+				selectedWorksheetIndexes,
+			},
+			IsAsync: true,
+		};
+
+		// Send the request to the API
+		const responseData = await pdf4meAsyncRequest.call(
+			this,
+			'/office/ApiV2Excel/ExcelAddWatermark',
+			body,
+		);
+
+		if (responseData) {
+			// Generate filename if not provided
+			let fileName = outputFileName;
+			if (!fileName || fileName.trim() === '') {
+				const baseName = originalFileName
+					? originalFileName.replace(/\.[^.]*$/, '')
+					: 'excel_with_watermark';
+				fileName = `${baseName}.xlsx`;
+			}
+
+			// Ensure .xlsx extension
+			if (!fileName.toLowerCase().endsWith('.xlsx')) {
+				fileName = `${fileName.replace(/\.[^.]*$/, '')}.xlsx`;
+			}
+
+			// Handle the response - Excel API returns JSON with embedded base64 file
+			let excelBuffer: Buffer;
+
+			// The API returns JSON in format: { document: { docData: "base64..." }, ... }
+			// or { docData: "base64..." } or similar structures
+			// Check for Buffer first to properly narrow TypeScript types
+			if (Buffer.isBuffer(responseData)) {
+				// Direct binary response
+				excelBuffer = responseData;
+			} else if (typeof responseData === 'string') {
+				// Base64 string response
+				excelBuffer = Buffer.from(responseData, 'base64');
+			} else if (typeof responseData === 'object' && responseData !== null) {
+				// Try different possible response structures from IDataObject
+				const response = responseData as IDataObject;
+
+				// Check if the response has a document field
+				if (response.document) {
+					const document = response.document;
+
+					// The document could be a string (base64) or an object with nested fields
+					if (typeof document === 'string') {
+						// Document itself is the base64 content
+						excelBuffer = Buffer.from(document, 'base64');
+					} else if (typeof document === 'object' && document !== null) {
+						// Document is an object, extract base64 from possible fields
+						const docObj = document as IDataObject;
+						const docContent =
+							(docObj.docData as string) ||
+							(docObj.content as string) ||
+							(docObj.docContent as string) ||
+							(docObj.data as string) ||
+							(docObj.file as string);
+
+						if (!docContent) {
+							const docKeys = Object.keys(docObj).join(', ');
+							throw new Error(`Document object has unexpected structure. Available keys: ${docKeys}`);
+						}
+
+						excelBuffer = Buffer.from(docContent, 'base64');
+					} else {
+						throw new Error(`Document field is neither string nor object: ${typeof document}`);
+					}
+				} else {
+					// No document field, try other possible locations
+					const docContent =
+						(response.docData as string) ||
+						(response.content as string) ||
+						(response.fileContent as string) ||
+						(response.data as string);
+
+					if (!docContent) {
+						// If no known field found, log the structure for debugging
+						const keys = Object.keys(responseData).join(', ');
+						throw new Error(`Excel API returned unexpected JSON structure. Available keys: ${keys}`);
+					}
+
+					excelBuffer = Buffer.from(docContent, 'base64');
+				}
+			} else {
+				throw new Error(`Unexpected response format: ${typeof responseData}`);
+			}
+
+			// Validate the response contains Excel data
+			if (!excelBuffer || excelBuffer.length < 1000) {
+				throw new Error(
+					'Invalid Excel response from API. The file appears to be too small or corrupted.',
+				);
+			}
+
+			// Validate Excel file format (XLSX files start with PK signature - ZIP format)
+			const magicBytes = excelBuffer.toString('hex', 0, 4);
+			if (magicBytes !== '504b0304') {
+				throw new Error(
+					`Invalid Excel file format. Expected XLSX file but got unexpected data. Magic bytes: ${magicBytes}`,
+				);
+			}
+
+			// Create binary data for output
+			const binaryData = await this.helpers.prepareBinaryData(
+				excelBuffer,
+				fileName,
+				'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+			);
+
+			// Determine the binary data name
+			const binaryDataKey = binaryDataName || 'data';
+
+			return [
+				{
+					json: {
+						fileName,
+						fileSize: excelBuffer.length,
+						success: true,
+						originalFileName,
+						watermarkText,
+						fontFamily,
+						textSize,
+						isBold,
+						isItalic,
+						textColor,
+						transparency,
+						rotationAngle,
+						position,
+						worksheetSelection,
+						selectedWorksheetNames,
+						selectedWorksheetIndexes,
+						message: 'Text watermark added to Excel file successfully',
+					},
+					binary: {
+						[binaryDataKey]: binaryData,
+					},
+				},
+			];
+		}
+
+		throw new Error('No response data received from PDF4ME API');
+	} catch (error) {
+		// Re-throw the error with additional context
+		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+		throw new Error(`Add text watermark to Excel failed: ${errorMessage}`);
+	}
+}
+
+

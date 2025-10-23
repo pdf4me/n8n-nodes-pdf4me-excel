@@ -263,6 +263,20 @@ export const ActionConstants = {
 	AddTextHeaderFooterToExcel: 'Add Text Header Footer To Excel',
 	AddImageHeaderFooterToExcel: 'Add Image Header Footer To Excel',
 	RemoveHeaderFooterToExcel: 'Remove Header Footer To Excel',
+	AddTextWatermarkToExcel: 'Add Text Watermark To Excel',
+	RemoveWatermarkFromExcel: 'Remove Watermark From Excel',
+	FindReplaceTextInExcel: 'Find Replace Text In Excel',
+	UpdateRowsToExcel: 'Update Rows To Excel',
+	AddRowsToExcel: 'Add Rows To Excel',
+	ExcelExtractRows: 'Excel Extract Rows',
+	DeleteRowsFromExcel: 'Delete Rows From Excel',
+	DeleteWorksheetFromExcel: 'Delete Worksheet From Excel',
+	ExtractWorksheetFromExcel: 'Extract Worksheet From Excel',
+	SecureExcelFile: 'Secure Excel File',
+	UnlockExcelFile: 'Unlock Excel File',
+	MergeExcelFiles: 'Merge Excel Files',
+	MergeRowsInExcel: 'Merge Rows In Excel',
+	ParseCsvToExcel: 'Parse CSV To JSON',
 };
 
 /**
