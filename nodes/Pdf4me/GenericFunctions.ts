@@ -43,8 +43,6 @@ export async function pdf4meApiRequest(
 	}
 
 	try {
-		// Debug: Log authentication info (without exposing the full key)
-
 		const response = await this.helpers.httpRequestWithAuthentication.call(this, 'pdf4meApi', {
 			url: `${options.baseURL}${options.url}`,
 			method: options.method,

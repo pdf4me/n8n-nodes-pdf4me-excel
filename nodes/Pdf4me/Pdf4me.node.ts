@@ -80,12 +80,19 @@ export class Pdf4me implements INodeType {
 				} else if (action === ActionConstants.ParseCsvToExcel) {
 					results = await parseCsvToExcel.execute.call(this, i);
 				}
-				// Add pairedItem to each result to maintain data lineage
-				for (const result of results) {
+				if (!results || results.length === 0) {
 					operationResult.push({
-						...result,
+						json: {},
 						pairedItem: { item: i },
 					});
+				} else {
+					// Add pairedItem to each result to maintain data lineage
+					for (const result of results) {
+						operationResult.push({
+							...result,
+							pairedItem: { item: i },
+						});
+					}
 				}
 			} catch (err) {
 				if (this.continueOnFail()) {
