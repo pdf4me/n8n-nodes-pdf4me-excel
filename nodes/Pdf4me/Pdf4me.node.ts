@@ -44,44 +44,56 @@ export class Pdf4me implements INodeType {
 			const action = this.getNodeParameter('operation', i);
 
 			try {
+				let results: INodeExecutionData[] = [];
 				if (action === ActionConstants.AddTextHeaderFooterToExcel) {
-					operationResult.push(...(await addTextHeaderFooterToExcel.execute.call(this, i)));
+					results = await addTextHeaderFooterToExcel.execute.call(this, i);
 				} else if (action === ActionConstants.AddImageHeaderFooterToExcel) {
-					operationResult.push(...(await addImageHeaderFooterToExcel.execute.call(this, i)));
+					results = await addImageHeaderFooterToExcel.execute.call(this, i);
 				} else if (action === ActionConstants.RemoveHeaderFooterToExcel) {
-					operationResult.push(...(await removeHeaderFooterToExcel.execute.call(this, i)));
+					results = await removeHeaderFooterToExcel.execute.call(this, i);
 				} else if (action === ActionConstants.AddTextWatermarkToExcel) {
-					operationResult.push(...(await addTextWatermarkToExcel.execute.call(this, i)));
+					results = await addTextWatermarkToExcel.execute.call(this, i);
 				} else if (action === ActionConstants.RemoveWatermarkFromExcel) {
-					operationResult.push(...(await removeWatermarkFromExcel.execute.call(this, i)));
+					results = await removeWatermarkFromExcel.execute.call(this, i);
 				} else if (action === ActionConstants.FindReplaceTextInExcel) {
-					operationResult.push(...(await findReplaceTextInExcel.execute.call(this, i)));
+					results = await findReplaceTextInExcel.execute.call(this, i);
 				} else if (action === ActionConstants.UpdateRowsToExcel) {
-					operationResult.push(...(await updateRowsToExcel.execute.call(this, i)));
+					results = await updateRowsToExcel.execute.call(this, i);
 				} else if (action === ActionConstants.AddRowsToExcel) {
-					operationResult.push(...(await addRowsToExcel.execute.call(this, i)));
+					results = await addRowsToExcel.execute.call(this, i);
 				} else if (action === ActionConstants.ExcelExtractRows) {
-					operationResult.push(...(await excelExtractRows.execute.call(this, i)));
+					results = await excelExtractRows.execute.call(this, i);
 				} else if (action === ActionConstants.DeleteRowsFromExcel) {
-					operationResult.push(...(await deleteRowsFromExcel.execute.call(this, i)));
+					results = await deleteRowsFromExcel.execute.call(this, i);
 				} else if (action === ActionConstants.DeleteWorksheetFromExcel) {
-					operationResult.push(...(await deleteWorksheetFromExcel.execute.call(this, i)));
+					results = await deleteWorksheetFromExcel.execute.call(this, i);
 				} else if (action === ActionConstants.ExtractWorksheetFromExcel) {
-					operationResult.push(...(await extractWorksheetFromExcel.execute.call(this, i)));
+					results = await extractWorksheetFromExcel.execute.call(this, i);
 				} else if (action === ActionConstants.SecureExcelFile) {
-					operationResult.push(...(await secureExcelFile.execute.call(this, i)));
+					results = await secureExcelFile.execute.call(this, i);
 				} else if (action === ActionConstants.UnlockExcelFile) {
-					operationResult.push(...(await unlockExcelFile.execute.call(this, i)));
+					results = await unlockExcelFile.execute.call(this, i);
 				} else if (action === ActionConstants.MergeExcelFiles) {
-					operationResult.push(...(await mergeExcelFiles.execute.call(this, i)));
+					results = await mergeExcelFiles.execute.call(this, i);
 				} else if (action === ActionConstants.MergeRowsInExcel) {
-					operationResult.push(...(await mergeRowsInExcel.execute.call(this, i)));
+					results = await mergeRowsInExcel.execute.call(this, i);
 				} else if (action === ActionConstants.ParseCsvToExcel) {
-					operationResult.push(...(await parseCsvToExcel.execute.call(this, i)));
+					results = await parseCsvToExcel.execute.call(this, i);
+				}
+				// Add pairedItem to each result to maintain data lineage
+				for (const result of results) {
+					operationResult.push({
+						...result,
+						pairedItem: { item: i },
+					});
 				}
 			} catch (err) {
 				if (this.continueOnFail()) {
-					operationResult.push({ json: this.getInputData(i)[0].json, error: err });
+					operationResult.push({
+						json: this.getInputData(i)[0].json,
+						error: err,
+						pairedItem: { item: i },
+					});
 				} else {
 					throw err;
 				}

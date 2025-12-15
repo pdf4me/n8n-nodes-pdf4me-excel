@@ -6,8 +6,9 @@ import type {
 	JsonObject,
 	IHttpRequestMethods,
 	IHttpRequestOptions,
+	INode,
 } from 'n8n-workflow';
-import { NodeApiError } from 'n8n-workflow';
+import { NodeApiError, NodeOperationError } from 'n8n-workflow';
 
 export async function pdf4meApiRequest(
 	this: IHookFunctions | IExecuteFunctions | ILoadOptionsFunctions,
@@ -102,19 +103,12 @@ export async function pdf4meApiRequest(
 async function delayAsync(
 	this: IHookFunctions | IExecuteFunctions | ILoadOptionsFunctions,
 ): Promise<void> {
-	// const startTime = Date.now();
-	// console.log('PDF4ME: Calling DelayAsync endpoint for 10-second delay');
-
 	await this.helpers.httpRequestWithAuthentication.call(this, 'pdf4meApi', {
 		url: 'https://api.pdf4me.com/api/v2/AddDelay',
 		method: 'GET',
 		returnFullResponse: true,
 		ignoreHttpStatusErrors: true,
 	});
-
-	// const endTime = Date.now();
-	// const actualDelay = endTime - startTime;
-	// console.log(`PDF4ME: DelayAsync endpoint completed after ${actualDelay}ms (expected: 10000ms)`);
 }
 
 export async function pdf4meAsyncRequest(
@@ -228,7 +222,7 @@ export async function pdf4meAsyncRequest(
 	}
 }
 
-export function sanitizeProfiles(data: IDataObject): void {
+export function sanitizeProfiles(data: IDataObject, node?: INode): void {
 	// Convert profiles to a trimmed string (or empty string if not provided)
 	const profilesValue = data.profiles ? String(data.profiles).trim() : '';
 
@@ -249,10 +243,12 @@ export function sanitizeProfiles(data: IDataObject): void {
 		}
 		data.profiles = sanitized;
 	} catch (error) {
-		throw new Error(
-			'Invalid JSON in Profiles. Check https://dev.pdf4me.com/ or contact support@pdf4me.com for help. ' +
-				(error as Error).message,
-		);
+		const errorMessage = 'Invalid JSON in Profiles. Check https://dev.pdf4me.com/ or contact support@pdf4me.com for help. ' +
+			(error as Error).message;
+		if (node) {
+			throw new NodeOperationError(node, errorMessage);
+		}
+		throw new Error(errorMessage);
 	}
 }
 

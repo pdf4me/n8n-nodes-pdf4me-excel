@@ -1,4 +1,5 @@
 import type { IExecuteFunctions, IDataObject, INodeProperties } from 'n8n-workflow';
+import { NodeOperationError, NodeApiError } from 'n8n-workflow';
 import {
 	pdf4meAsyncRequest,
 	ActionConstants,
@@ -201,11 +202,11 @@ export async function execute(this: IExecuteFunctions, index: number) {
 		const fileValues = (filesToMergeData.fileValues as IDataObject[]) || [];
 
 		if (fileValues.length === 0) {
-			throw new Error('At least one file is required to merge');
+			throw new NodeOperationError(this.getNode(), 'At least one file is required to merge');
 		}
 
 		if (fileValues.length === 1) {
-			throw new Error('At least two files are required to merge');
+			throw new NodeOperationError(this.getNode(), 'At least two files are required to merge');
 		}
 
 		// Process each file
@@ -226,7 +227,7 @@ export async function execute(this: IExecuteFunctions, index: number) {
 				const item = this.getInputData(index);
 
 				if (!item[0].binary || !item[0].binary[binaryPropertyName]) {
-					throw new Error(`File ${i + 1}: No binary data found in property '${binaryPropertyName}'`);
+					throw new NodeOperationError(this.getNode(), `File ${i + 1}: No binary data found in property '${binaryPropertyName}'`);
 				}
 
 				const buffer = await this.helpers.getBinaryDataBuffer(index, binaryPropertyName);
@@ -240,13 +241,13 @@ export async function execute(this: IExecuteFunctions, index: number) {
 				}
 
 				if (!fileContent || fileContent.trim() === '') {
-					throw new Error(`File ${i + 1}: Base64 content is required`);
+					throw new NodeOperationError(this.getNode(), `File ${i + 1}: Base64 content is required`);
 				}
 			} else if (inputMethod === 'url') {
 				const url = file.fileUrl as string;
 
 				if (!url || url.trim() === '') {
-					throw new Error(`File ${i + 1}: URL is required when using URL input type`);
+					throw new NodeOperationError(this.getNode(), `File ${i + 1}: URL is required when using URL input type`);
 				}
 
 				try {
@@ -261,10 +262,10 @@ export async function execute(this: IExecuteFunctions, index: number) {
 					fileContent = buffer.toString('base64');
 				} catch (error) {
 					const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-					throw new Error(`File ${i + 1}: Failed to download from URL: ${errorMessage}`);
+					throw new NodeOperationError(this.getNode(), `File ${i + 1}: Failed to download from URL: ${errorMessage}`);
 				}
 			} else {
-				throw new Error(`File ${i + 1}: Unsupported input method: ${inputMethod}`);
+				throw new NodeOperationError(this.getNode(), `File ${i + 1}: Unsupported input method: ${inputMethod}`);
 			}
 
 			// Build document object
@@ -435,10 +436,14 @@ export async function execute(this: IExecuteFunctions, index: number) {
 			];
 		}
 
-		throw new Error('No response data received from PDF4ME API');
+		throw new NodeOperationError(this.getNode(), 'No response data received from PDF4ME API');
 	} catch (error) {
+		// If it's already a NodeOperationError or NodeApiError, re-throw as-is
+		if (error instanceof NodeOperationError || error instanceof NodeApiError) {
+			throw error;
+		}
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-		throw new Error(`Merge Excel files failed: ${errorMessage}`);
+		throw new NodeOperationError(this.getNode(), `Merge Excel files failed: ${errorMessage}`);
 	}
 }
 
