@@ -1,4 +1,5 @@
 import type { IExecuteFunctions, IDataObject, INodeProperties } from 'n8n-workflow';
+import { NodeOperationError, NodeApiError } from 'n8n-workflow';
 import {
 	pdf4meAsyncRequest,
 	ActionConstants,
@@ -215,7 +216,7 @@ export async function execute(this: IExecuteFunctions, index: number) {
 			const item = this.getInputData(index);
 
 			if (!item[0].binary || !item[0].binary[binaryPropertyName]) {
-				throw new Error(`No binary data found in property '${binaryPropertyName}'`);
+				throw new NodeOperationError(this.getNode(), `No binary data found in property '${binaryPropertyName}'`);
 			}
 
 			const binaryData = item[0].binary[binaryPropertyName];
@@ -238,7 +239,7 @@ export async function execute(this: IExecuteFunctions, index: number) {
 			const url = this.getNodeParameter('url', index) as string;
 
 			if (!url || url.trim() === '') {
-				throw new Error('URL is required when using URL input type');
+				throw new NodeOperationError(this.getNode(), 'URL is required when using URL input type');
 			}
 
 			try {
@@ -273,15 +274,15 @@ export async function execute(this: IExecuteFunctions, index: number) {
 				}
 			} catch (error) {
 				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to download file from URL: ${errorMessage}`);
+				throw new NodeOperationError(this.getNode(), `Failed to download file from URL: ${errorMessage}`);
 			}
 		} else {
-			throw new Error(`Unsupported input data type: ${inputDataType}`);
+			throw new NodeOperationError(this.getNode(), `Unsupported input data type: ${inputDataType}`);
 		}
 
 		// Validate content
 		if (!docContent || docContent.trim() === '') {
-			throw new Error('Excel content is required');
+			throw new NodeOperationError(this.getNode(), 'Excel content is required');
 		}
 
 		// Build the request body according to the API specification
@@ -428,11 +429,15 @@ export async function execute(this: IExecuteFunctions, index: number) {
 			];
 		}
 
-		throw new Error('No response data received from PDF4ME API');
+		throw new NodeOperationError(this.getNode(), 'No response data received from PDF4ME API');
 	} catch (error) {
 		// Re-throw the error with additional context
+		// If it's already a NodeOperationError or NodeApiError, re-throw as-is
+		if (error instanceof NodeOperationError || error instanceof NodeApiError) {
+			throw error;
+		}
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-		throw new Error(`Merge rows in Excel failed: ${errorMessage}`);
+		throw new NodeOperationError(this.getNode(), `Merge rows in Excel failed: ${errorMessage}`);
 	}
 }
 

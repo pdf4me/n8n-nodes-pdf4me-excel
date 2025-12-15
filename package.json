@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-pdf4me-excel",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "n8n community node for Excel document processing with PDF4me API - Add headers and footers to Excel worksheets",
   "keywords": [
     "n8n-community-node-package",

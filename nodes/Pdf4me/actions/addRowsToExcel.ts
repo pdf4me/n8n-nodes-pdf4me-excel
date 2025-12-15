@@ -1,4 +1,5 @@
 import type { IExecuteFunctions, IDataObject, INodeProperties } from 'n8n-workflow';
+import { NodeOperationError, NodeApiError } from 'n8n-workflow';
 import {
 	pdf4meAsyncRequest,
 	ActionConstants,
@@ -332,7 +333,7 @@ export async function execute(this: IExecuteFunctions, index: number) {
 			const item = this.getInputData(index);
 
 			if (!item[0].binary || !item[0].binary[binaryPropertyName]) {
-				throw new Error(`No binary data found in property '${binaryPropertyName}'`);
+				throw new NodeOperationError(this.getNode(), `No binary data found in property '${binaryPropertyName}'`);
 			}
 
 			const binaryData = item[0].binary[binaryPropertyName];
@@ -355,7 +356,7 @@ export async function execute(this: IExecuteFunctions, index: number) {
 			const url = this.getNodeParameter('url', index) as string;
 
 			if (!url || url.trim() === '') {
-				throw new Error('URL is required when using URL input type');
+				throw new NodeOperationError(this.getNode(), 'URL is required when using URL input type');
 			}
 
 			try {
@@ -390,21 +391,21 @@ export async function execute(this: IExecuteFunctions, index: number) {
 				}
 			} catch (error) {
 				const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-				throw new Error(`Failed to download file from URL: ${errorMessage}`);
+				throw new NodeOperationError(this.getNode(), `Failed to download file from URL: ${errorMessage}`);
 			}
 		} else {
-			throw new Error(`Unsupported input data type: ${inputDataType}`);
+			throw new NodeOperationError(this.getNode(), `Unsupported input data type: ${inputDataType}`);
 		}
 
 		// Validate content
 		if (!docContent || docContent.trim() === '') {
-			throw new Error('Excel content is required');
+			throw new NodeOperationError(this.getNode(), 'Excel content is required');
 		}
 
 		// Validate and parse JSON data
 		let jsonData: string;
 		if (!jsonInput || jsonInput.trim() === '') {
-			throw new Error('JSON data is required');
+			throw new NodeOperationError(this.getNode(), 'JSON data is required');
 		}
 
 		// Check if the input is already a valid JSON string or needs to be stringified
@@ -415,12 +416,12 @@ export async function execute(this: IExecuteFunctions, index: number) {
 			jsonData = jsonInput;
 		} catch (parseError) {
 			// If parsing fails, it might be a JavaScript object that needs stringifying
-			throw new Error(`Invalid JSON data: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
+			throw new NodeOperationError(this.getNode(), `Invalid JSON data: ${parseError instanceof Error ? parseError.message : 'Unknown error'}`);
 		}
 
 		// Validate worksheet name
 		if (!worksheetName || worksheetName.trim() === '') {
-			throw new Error('Worksheet name is required');
+			throw new NodeOperationError(this.getNode(), 'Worksheet name is required');
 		}
 
 		// Build the request body according to the API specification
@@ -597,10 +598,14 @@ export async function execute(this: IExecuteFunctions, index: number) {
 			];
 		}
 
-		throw new Error('No response data received from PDF4ME API');
+		throw new NodeOperationError(this.getNode(), 'No response data received from PDF4ME API');
 	} catch (error) {
 		// Re-throw the error with additional context
+		// If it's already a NodeOperationError or NodeApiError, re-throw as-is
+		if (error instanceof NodeOperationError || error instanceof NodeApiError) {
+			throw error;
+		}
 		const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-		throw new Error(`Add rows to Excel failed: ${errorMessage}`);
+		throw new NodeOperationError(this.getNode(), `Add rows to Excel failed: ${errorMessage}`);
 	}
 }
