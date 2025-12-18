@@ -43,7 +43,7 @@ export async function pdf4meApiRequest(
 	}
 
 	try {
-		const response = await this.helpers.httpRequestWithAuthentication.call(this, 'pdf4meApi', {
+		const response = await this.helpers.httpRequestWithAuthentication.call(this, 'pdf4meExcelApi', {
 			url: `${options.baseURL}${options.url}`,
 			method: options.method,
 			headers: options.headers,
@@ -101,7 +101,7 @@ export async function pdf4meApiRequest(
 async function delayAsync(
 	this: IHookFunctions | IExecuteFunctions | ILoadOptionsFunctions,
 ): Promise<void> {
-	await this.helpers.httpRequestWithAuthentication.call(this, 'pdf4meApi', {
+	await this.helpers.httpRequestWithAuthentication.call(this, 'pdf4meExcelApi', {
 		url: 'https://api.pdf4me.com/api/v2/AddDelay',
 		method: 'GET',
 		returnFullResponse: true,
@@ -157,7 +157,7 @@ export async function pdf4meAsyncRequest(
 
 	try {
 		// Make initial request
-		const response = await this.helpers.httpRequestWithAuthentication.call(this, 'pdf4meApi', {
+		const response = await this.helpers.httpRequestWithAuthentication.call(this, 'pdf4meExcelApi', {
 			url: `${options.baseURL}${options.url}`,
 			method: options.method,
 			headers: options.headers,
@@ -293,7 +293,7 @@ async function pollForCompletion(
 	while (retryCount < maxRetries) {
 		try {
 			// Make polling request with appropriate encoding based on response type
-			const pollResponse = await this.helpers.httpRequestWithAuthentication.call(this, 'pdf4meApi', {
+			const pollResponse = await this.helpers.httpRequestWithAuthentication.call(this, 'pdf4meExcelApi', {
 				url: locationUrl,
 				method: 'GET',
 				encoding: isJsonResponse ? undefined : 'arraybuffer' as const,
